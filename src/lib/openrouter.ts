@@ -10,7 +10,7 @@ export const openrouter = new OpenAI({
 });
 
 export const AI_MODELS = {
-    primary: "openai/gpt-4-turbo",
+    primary: "mistralai/devstral-2512:free",
     fallback: "anthropic/claude-3-sonnet"
 };
 

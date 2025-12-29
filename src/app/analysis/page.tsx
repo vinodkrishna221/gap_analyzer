@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import ReactMarkdown from 'react-markdown';
 
 export default function AnalysisPage() {
     const { data: session, status } = useSession();
@@ -78,8 +79,8 @@ export default function AnalysisPage() {
                             <Card
                                 key={career._id}
                                 className={`p-4 cursor-pointer transition ${selectedCareers.includes(career._id)
-                                        ? 'ring-2 ring-blue-600 bg-blue-50'
-                                        : 'hover:shadow-lg'
+                                    ? 'ring-2 ring-blue-600 bg-blue-50'
+                                    : 'hover:shadow-lg'
                                     }`}
                                 onClick={() => {
                                     if (selectedCareers.includes(career._id)) {
@@ -125,8 +126,8 @@ export default function AnalysisPage() {
                             <div className="flex justify-between items-start mb-6">
                                 <div>
                                     <h2 className="text-2xl font-bold">{analysis.careerName}</h2>
-                                    <div className="mt-2 text-gray-600 max-w-2xl">
-                                        {analysis.aiInsights}
+                                    <div className="mt-2 text-gray-600 max-w-2xl prose prose-sm dark:prose-invert">
+                                        <ReactMarkdown>{analysis.aiInsights}</ReactMarkdown>
                                     </div>
                                 </div>
                                 <div className="text-center">
@@ -135,6 +136,15 @@ export default function AnalysisPage() {
                                     </div>
                                     <div className="text-sm text-gray-500">Match Score</div>
                                 </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <Button
+                                    className="w-full bg-indigo-600 hover:bg-indigo-700"
+                                    onClick={() => router.push('/recommendations')}
+                                >
+                                    Get Career Recommendations & Learning Resources →
+                                </Button>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

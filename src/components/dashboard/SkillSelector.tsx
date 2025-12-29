@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,7 @@ export default function SkillSelector() {
     const [newInterest, setNewInterest] = useState('');
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         fetchSkills();
@@ -89,7 +91,8 @@ export default function SkillSelector() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ skills, interests })
             });
-            // Optionally show success message
+            // Redirect to analysis page
+            router.push('/analysis');
         } catch (error) {
             console.error('Failed to save skills', error);
         } finally {

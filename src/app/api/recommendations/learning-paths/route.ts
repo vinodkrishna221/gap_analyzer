@@ -4,9 +4,11 @@ import { connectDB } from '@/lib/db/connection';
 import { LearningResource } from '@/lib/db/models/LearningResource';
 import { openrouter, AI_MODELS } from '@/lib/openrouter';
 
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+
 export async function POST(req: NextRequest) {
     try {
-        const session = await getServerSession();
+        const session = await getServerSession(authOptions);
         if (!session?.user?.id) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
