@@ -1,0 +1,22 @@
+export const initialSkills = [
+    { name: 'JavaScript', category: 'Technical', subcategory: 'Programming', demandScore: 95 },
+    { name: 'Python', category: 'Technical', subcategory: 'Programming', demandScore: 93 },
+    { name: 'React', category: 'Technical', subcategory: 'Frontend', demandScore: 90 },
+    { name: 'Node.js', category: 'Technical', subcategory: 'Backend', demandScore: 85 },
+    { name: 'SQL', category: 'Technical', subcategory: 'Database', demandScore: 88 },
+    { name: 'Git', category: 'Tools', subcategory: 'Version Control', demandScore: 92 },
+    { name: 'Communication', category: 'Soft Skills', subcategory: 'Interpersonal', demandScore: 87 },
+    { name: 'Problem Solving', category: 'Soft Skills', subcategory: 'Critical Thinking', demandScore: 89 },
+    { name: 'Machine Learning', category: 'Technical', subcategory: 'AI/ML', demandScore: 82 },
+    { name: 'Docker', category: 'Tools', subcategory: 'DevOps', demandScore: 78 },
+    { name: 'TypeScript', category: 'Technical', subcategory: 'Programming', demandScore: 88 },
+    { name: 'Java', category: 'Technical', subcategory: 'Programming', demandScore: 85 },
+    { name: 'C#', category: 'Technical', subcategory: 'Programming', demandScore: 80 },
+    { name: 'AWS', category: 'Technical', subcategory: 'Cloud', demandScore: 91 },
+    { name: 'Azure', category: 'Technical', subcategory: 'Cloud', demandScore: 84 },
+    { name: 'CSS', category: 'Technical', subcategory: 'Frontend', demandScore: 86 },
+    { name: 'HTML', category: 'Technical', subcategory: 'Frontend', demandScore: 84 },
+    { name: 'GraphQL', category: 'Technical', subcategory: 'API', demandScore: 75 },
+    { name: 'MongoDB', category: 'Technical', subcategory: 'Database', demandScore: 83 },
+    { name: 'PostgreSQL', category: 'Technical', subcategory: 'Database', demandScore: 87 }
+];
