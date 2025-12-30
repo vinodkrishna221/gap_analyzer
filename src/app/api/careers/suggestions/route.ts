@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { connectDB } from '@/lib/db/connection';
 import { UserSkill } from '@/lib/db/models/UserSkill';
 import { suggestCareersForUser } from '@/lib/openrouter';
+import { getOrSet, generateCacheKey } from '@/lib/cache';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET(req: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
         await connectDB();
 
         // Fetch user's skills
-        const userSkillsDoc = await UserSkill.findOne({ userId: session.user.id });
+        const userSkillsDoc = await UserSkill.findOne({ userId: session.user.id }).lean();
 
         if (!userSkillsDoc || userSkillsDoc.skills.length === 0) {
             return NextResponse.json({
@@ -31,8 +32,14 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const interests = searchParams.get('interests') || undefined;
 
-        // Generate personalized career suggestions
-        const careers = await suggestCareersForUser(userSkillsDoc.skills, interests);
+        // OPTIMIZATION: Cache career suggestions for 30 minutes
+        const skillsHash = userSkillsDoc.skills.map((s: any) => s.skillName).sort().join(',');
+        const cacheKey = generateCacheKey('career-suggestions', session.user.id,
+            skillsHash + (interests || ''));
+
+        const careers = await getOrSet(cacheKey, async () => {
+            return await suggestCareersForUser(userSkillsDoc.skills, interests);
+        }, 'medium'); // 30 min cache
 
         if (careers.length === 0) {
             return NextResponse.json({

@@ -5,8 +5,8 @@ import { UserSkill } from '@/lib/db/models/UserSkill';
 import { Career } from '@/lib/db/models/Career';
 import { CareerSkill } from '@/lib/db/models/CareerSkill';
 import { Analysis } from '@/lib/db/models/Analysis';
-import { analyzeSkillGap } from '@/lib/openrouter';
-
+import { batchAnalyzeSkillGaps } from '@/lib/openrouter';
+import { getOrSet, generateCacheKey } from '@/lib/cache';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function POST(req: NextRequest) {
@@ -17,12 +17,12 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { careerIds, aiCareers } = body; // Support both DB careers and AI-generated careers
+        const { careerIds, aiCareers } = body;
 
         await connectDB();
 
         // Fetch user skills
-        const userSkillsDoc = await UserSkill.findOne({ userId: session.user.id });
+        const userSkillsDoc = await UserSkill.findOne({ userId: session.user.id }).lean();
         if (!userSkillsDoc || userSkillsDoc.skills.length === 0) {
             return NextResponse.json({
                 success: false,
@@ -31,18 +31,16 @@ export async function POST(req: NextRequest) {
         }
 
         const userSkills = userSkillsDoc.skills;
-        const analyses = [];
+        const analyses: any[] = [];
+        const careersToAnalyze: { name: string; requiredSkills: any[] }[] = [];
 
         // Handle AI-generated careers
         if (aiCareers && Array.isArray(aiCareers) && aiCareers.length > 0) {
             for (const career of aiCareers.slice(0, 5)) {
                 const requiredSkills = career.requiredSkills || [];
-
-                // Calculate match using the same algorithm
                 const analysis = calculateSkillMatch(userSkills, requiredSkills);
 
-                // Get AI insights
-                const aiInsights = await analyzeSkillGap(userSkills, requiredSkills, career.title);
+                careersToAnalyze.push({ name: career.title, requiredSkills });
 
                 analyses.push({
                     careerId: career.id,
@@ -51,34 +49,32 @@ export async function POST(req: NextRequest) {
                     matchingSkills: analysis.matchingSkills,
                     missingSkills: analysis.missingSkills,
                     partialSkills: analysis.partialSkills,
-                    aiInsights,
+                    aiInsights: '', // Will be filled after batch call
                     salaryRange: career.salaryRange,
-                    growthOutlook: career.growthOutlook
+                    growthOutlook: career.growthOutlook,
+                    isAiCareer: true
                 });
             }
         }
 
-        // Handle database careers (original flow)
+        // Handle database careers
         if (careerIds && Array.isArray(careerIds) && careerIds.length > 0) {
-            for (const careerId of careerIds.slice(0, 5)) {
-                const career = await Career.findById(careerId);
-                if (!career) continue;
+            // OPTIMIZATION: Parallel DB queries
+            const [careers, careerSkillsDocs] = await Promise.all([
+                Career.find({ _id: { $in: careerIds.slice(0, 5) } }).lean(),
+                CareerSkill.find({ careerId: { $in: careerIds.slice(0, 5) } }).lean()
+            ]);
 
-                const careerSkillsDoc = await CareerSkill.findOne({ careerId });
+            for (const career of careers) {
+                const careerSkillsDoc = careerSkillsDocs.find(
+                    (cs: any) => cs.careerId.toString() === career._id.toString()
+                );
                 if (!careerSkillsDoc) continue;
 
                 const requiredSkills = careerSkillsDoc.requiredSkills;
                 const analysis = calculateSkillMatch(userSkills, requiredSkills);
-                const aiInsights = await analyzeSkillGap(userSkills, requiredSkills, career.title);
 
-                // Save analysis to database
-                await Analysis.create({
-                    userId: session.user.id,
-                    targetCareerId: careerId,
-                    targetCareerName: career.title,
-                    results: analysis,
-                    aiInsights
-                });
+                careersToAnalyze.push({ name: career.title, requiredSkills });
 
                 analyses.push({
                     careerId: career._id,
@@ -87,7 +83,8 @@ export async function POST(req: NextRequest) {
                     matchingSkills: analysis.matchingSkills,
                     missingSkills: analysis.missingSkills,
                     partialSkills: analysis.partialSkills,
-                    aiInsights
+                    aiInsights: '',
+                    isDbCareer: true
                 });
             }
         }
@@ -97,6 +94,40 @@ export async function POST(req: NextRequest) {
                 success: false,
                 error: 'No careers provided for analysis'
             }, { status: 400 });
+        }
+
+        // OPTIMIZATION: Single batched AI call for all careers
+        const cacheKey = generateCacheKey('skill-gap-analysis', session.user.id,
+            careersToAnalyze.map(c => c.name).join(','));
+
+        const insightsMap = await getOrSet(cacheKey, async () => {
+            return await batchAnalyzeSkillGaps(userSkills, careersToAnalyze);
+        }, 'medium');
+
+        // Apply insights to analyses
+        for (const analysis of analyses) {
+            analysis.aiInsights = insightsMap.get(analysis.careerName) ||
+                "Analysis based on your current skill profile.";
+
+            // Save to database for DB careers only
+            if (analysis.isDbCareer) {
+                await Analysis.create({
+                    userId: session.user.id,
+                    targetCareerId: analysis.careerId,
+                    targetCareerName: analysis.careerName,
+                    results: {
+                        matchScore: analysis.matchScore,
+                        matchingSkills: analysis.matchingSkills,
+                        missingSkills: analysis.missingSkills,
+                        partialSkills: analysis.partialSkills
+                    },
+                    aiInsights: analysis.aiInsights
+                });
+            }
+
+            // Clean up internal flags
+            delete analysis.isAiCareer;
+            delete analysis.isDbCareer;
         }
 
         return NextResponse.json({
@@ -132,18 +163,16 @@ function calculateSkillMatch(userSkills: any[], requiredSkills: any[]) {
         totalWeight += weight;
 
         if (!userSkill) {
-            // Missing skill
             missingSkills.push({
                 skillName: required.skillName,
                 importance: required.importance,
                 requiredProficiency: required.minimumProficiency
             });
         } else {
-            const userLevel = proficiencyScores[userSkill.proficiencyLevel];
-            const requiredLevel = proficiencyScores[required.minimumProficiency];
+            const userLevel = proficiencyScores[userSkill.proficiencyLevel] || 0;
+            const requiredLevel = proficiencyScores[required.minimumProficiency] || 50;
 
             if (userLevel >= requiredLevel) {
-                // Matching skill
                 matchingSkills.push({
                     skillName: required.skillName,
                     userProficiency: userSkill.proficiencyLevel,
@@ -151,14 +180,13 @@ function calculateSkillMatch(userSkills: any[], requiredSkills: any[]) {
                 });
                 achievedWeight += weight;
             } else {
-                // Partial skill
                 partialSkills.push({
                     skillName: required.skillName,
                     userProficiency: userSkill.proficiencyLevel,
                     requiredProficiency: required.minimumProficiency,
                     gap: `Need to improve from ${userSkill.proficiencyLevel} to ${required.minimumProficiency}`
                 });
-                achievedWeight += (userLevel / requiredLevel) * weight; // Partial credit
+                achievedWeight += (userLevel / requiredLevel) * weight;
             }
         }
     });

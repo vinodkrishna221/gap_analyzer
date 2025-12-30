@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { connectDB } from '@/lib/db/connection';
 import { LearningResource } from '@/lib/db/models/LearningResource';
-import { openrouter, AI_MODELS } from '@/lib/openrouter';
-
+import { generateBatchLearningStrategies } from '@/lib/openrouter';
+import { getOrSet, generateCacheKey } from '@/lib/cache';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function POST(req: NextRequest) {
@@ -24,34 +24,44 @@ export async function POST(req: NextRequest) {
 
         await connectDB();
 
-        // Fetch learning resources for missing skills
-        const learningPaths = await Promise.all(
-            missingSkills.map(async (skill: string) => {
-                const resources = await LearningResource.find({
-                    skillName: skill
-                })
-                    .sort({ rating: -1, reviewCount: -1 })
-                    .limit(5);
-
-                // Generate AI learning strategy
-                const strategy = await generateLearningStrategy(skill);
-
-                return {
-                    skill,
-                    strategy,
-                    resources: resources.map(r => ({
-                        title: r.title,
-                        provider: r.provider,
-                        url: r.url,
-                        type: r.type,
-                        difficulty: r.difficulty,
-                        duration: r.duration,
-                        isFree: r.cost.isFree,
-                        rating: r.rating
-                    }))
-                };
-            })
+        // OPTIMIZATION: Parallel DB queries for all skills at once
+        const resourceQueries = missingSkills.map((skill: string) =>
+            LearningResource.find({ skillName: skill })
+                .sort({ rating: -1, reviewCount: -1 })
+                .limit(5)
+                .lean() // Faster read-only queries
         );
+
+        const allResources = await Promise.all(resourceQueries);
+
+        // OPTIMIZATION: Cache AI strategies
+        const cacheKey = generateCacheKey('learning-strategies', session.user.id,
+            missingSkills.sort().join(','));
+
+        const strategyMap = await getOrSet(cacheKey, async () => {
+            // OPTIMIZATION: Single batched AI call instead of N sequential calls
+            return await generateBatchLearningStrategies(missingSkills);
+        }, 'medium');
+
+        // Build learning paths
+        const learningPaths = missingSkills.map((skill: string, index: number) => {
+            const resources = allResources[index] || [];
+
+            return {
+                skill,
+                strategy: strategyMap.get(skill) || `Focus on building strong fundamentals in ${skill}.`,
+                resources: resources.map((r: any) => ({
+                    title: r.title,
+                    provider: r.provider,
+                    url: r.url,
+                    type: r.type,
+                    difficulty: r.difficulty,
+                    duration: r.duration,
+                    isFree: r.cost?.isFree ?? true,
+                    rating: r.rating
+                }))
+            };
+        });
 
         return NextResponse.json({
             success: true,
@@ -61,29 +71,5 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error('Learning path error:', error);
         return NextResponse.json({ success: false, error: 'Failed to generate learning paths' }, { status: 500 });
-    }
-}
-
-async function generateLearningStrategy(skill: string): Promise<string> {
-    const prompt = `
-You are a learning advisor. For someone who wants to learn "${skill}", provide:
-1. Recommended learning order (1-2 sentences)
-2. Estimated time to reach job-ready level
-3. One key tip for mastering this skill
-
-Keep it concise (3-4 sentences total).
-`;
-
-    try {
-        const response = await openrouter.chat.completions.create({
-            model: AI_MODELS.primary,
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.7,
-            max_tokens: 200
-        });
-
-        return response.choices[0].message.content || "Start with fundamentals and practice regularly.";
-    } catch (error) {
-        return `Focus on building strong fundamentals in ${skill} through hands-on projects.`;
     }
 }

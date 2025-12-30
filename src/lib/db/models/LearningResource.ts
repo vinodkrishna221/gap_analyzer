@@ -26,5 +26,9 @@ const LearningResourceSchema = new mongoose.Schema({
     reviewCount: Number
 });
 
+// Compound index for faster skill-based queries with rating sort
+LearningResourceSchema.index({ skillName: 1, rating: -1 });
+LearningResourceSchema.index({ skillName: 1, reviewCount: -1 });
+
 export const LearningResource = mongoose.models.LearningResource ||
     mongoose.model('LearningResource', LearningResourceSchema);
