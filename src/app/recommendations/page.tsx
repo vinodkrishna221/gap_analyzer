@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import ReactMarkdown from 'react-markdown';
 
 export default function RecommendationsPage() {
     const { data: session, status } = useSession();
@@ -101,8 +102,8 @@ export default function RecommendationsPage() {
                                         <p className="text-gray-700 mb-3">{rec.description}</p>
 
                                         {/* AI Reasoning */}
-                                        <div className="bg-blue-50 p-3 rounded mb-4">
-                                            <p className="text-sm text-gray-700">{rec.reasoning}</p>
+                                        <div className="bg-blue-50 p-3 rounded mb-4 prose prose-sm max-w-none">
+                                            <ReactMarkdown>{rec.reasoning}</ReactMarkdown>
                                         </div>
 
                                         {/* Salary & Growth */}
@@ -219,7 +220,9 @@ export default function RecommendationsPage() {
                                     {/* AI Learning Strategy */}
                                     <div className="bg-blue-50 p-4 rounded mb-4">
                                         <h3 className="font-bold text-sm mb-2">📚 Learning Strategy</h3>
-                                        <p className="text-gray-700">{path.strategy}</p>
+                                        <div className="text-gray-700 prose prose-sm max-w-none">
+                                            <ReactMarkdown>{path.strategy}</ReactMarkdown>
+                                        </div>
                                     </div>
 
                                     {/* Learning Resources */}
