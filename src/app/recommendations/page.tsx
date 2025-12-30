@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,6 @@ import { Progress } from '@/components/ui/progress';
 export default function RecommendationsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [recommendations, setRecommendations] = useState<any[]>([]);
     const [selectedCareer, setSelectedCareer] = useState<any>(null);
     const [learningPaths, setLearningPaths] = useState<any[]>([]);
