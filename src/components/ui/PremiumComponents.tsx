@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, MouseEvent } from "react";
-import { motion, useMotionTemplate, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue, useSpring, AnimatePresence, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -53,7 +53,7 @@ export const MeshBackground = () => {
 };
 
 // --- 2. Magnetic Button ---
-interface MagneticButtonProps extends React.ComponentProps<typeof Button> {
+interface MagneticButtonProps extends HTMLMotionProps<"button"> {
     children: React.ReactNode;
 }
 
