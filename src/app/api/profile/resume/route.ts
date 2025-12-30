@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { connectDB } from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
 import { analyzeResume } from '@/lib/openrouter';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { extractText } from 'unpdf';
 
 // POST: Upload and analyze resume
 export async function POST(req: NextRequest) {
@@ -33,26 +33,15 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Convert File to ArrayBuffer for pdfjs
+        // Convert File to ArrayBuffer for unpdf
         const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
 
-        // Extract text from PDF using pdfjs-dist
+        // Extract text from PDF using unpdf (serverless-compatible)
         let textContent = '';
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const pdf = await (pdfjsLib as any).getDocument({ data: uint8Array }).promise;
-
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const pageText = content.items
-                    .filter((item: { str?: string }) => 'str' in item)
-                    .map((item: { str: string }) => item.str)
-                    .join(' ');
-                textContent += pageText + '\n';
-            }
+            const result = await extractText(arrayBuffer);
+            // unpdf returns text as array of strings per page
+            textContent = Array.isArray(result.text) ? result.text.join('\n') : result.text;
         } catch (pdfError) {
             console.error('PDF parsing error:', pdfError);
             return NextResponse.json(
