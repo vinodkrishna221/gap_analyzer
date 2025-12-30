@@ -2,9 +2,9 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
 
-interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassCardProps extends HTMLMotionProps<"div"> {
     children: React.ReactNode;
     variant?: "default" | "hover" | "neo";
 }
@@ -32,7 +32,7 @@ export function GlassCard({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 className={cn(baseStyles, variants.hover, className)}
-                {...props} // Apply props to the motion.div
+                {...props}
             >
                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 transition-opacity hover:opacity-100" />
                 {children}
@@ -41,8 +41,11 @@ export function GlassCard({
     }
 
     return (
-        <div className={cn(baseStyles, variants[variant], className)} {...props}>
+        <motion.div
+            className={cn(baseStyles, variants[variant], className)}
+            {...props}
+        >
             {children}
-        </div>
+        </motion.div>
     );
 }
