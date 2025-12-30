@@ -340,7 +340,7 @@ export default function RecommendationsPage() {
                                                     rel="noopener noreferrer"
                                                     className="w-full sm:w-auto"
                                                 >
-                                                    <Button size="sm" className="w-full sm:w-auto bg-white/5 hover:bg-primary hover:text-primary-foreground border-white/10 transition-all">
+                                                    <Button size="sm" className="w-full sm:w-auto bg-white/5 hover:bg-white hover:text-black border-white/10 transition-all">
                                                         Start Learning <ArrowRight className="ml-2 h-4 w-4" />
                                                     </Button>
                                                 </a>

@@ -235,8 +235,8 @@ export default function AnalysisPage() {
                                 variant={viewMode === 'suggested' ? 'default' : 'outline'}
                                 onClick={() => setViewMode('suggested')}
                                 className={`flex items-center gap-2 h-10 px-6 rounded-full transition-all ${viewMode === 'suggested'
-                                    ? 'bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20'
-                                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20'
+                                    : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:text-white'
                                     }`}
                             >
                                 <Sparkles className="h-4 w-4" />
@@ -246,8 +246,8 @@ export default function AnalysisPage() {
                                 variant={viewMode === 'search' ? 'default' : 'outline'}
                                 onClick={() => setViewMode('search')}
                                 className={`flex items-center gap-2 h-10 px-6 rounded-full transition-all ${viewMode === 'search'
-                                    ? 'bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20'
-                                    : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20'
+                                    : 'bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10 hover:text-white'
                                     }`}
                             >
                                 <Search className="h-4 w-4" />
@@ -295,7 +295,7 @@ export default function AnalysisPage() {
                                 <Button
                                     onClick={searchCareers}
                                     disabled={searching || !searchQuery.trim()}
-                                    className="h-12 px-8 rounded-xl text-md"
+                                    className="h-12 px-8 rounded-xl text-md hover:text-white transition-colors"
                                 >
                                     {searching ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Search'}
                                 </Button>

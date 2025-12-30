@@ -91,11 +91,11 @@ export const MagneticButton = ({ children, className, ...props }: MagneticButton
             )}
             {...props}
         >
-            <span className="relative z-10 flex items-center justify-center gap-2 group-hover:text-primary-foreground transition-colors duration-300">
+            <span className="relative z-10 flex items-center justify-center gap-2 text-foreground group-hover:text-white transition-colors duration-300">
                 {children}
             </span>
             <motion.div
-                className="absolute inset-0 z-0 bg-gradient-to-r from-primary via-orange-400 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                className="absolute inset-0 z-0 bg-gradient-to-r from-purple-600 via-pink-600 to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                 initial={{ x: "-100%" }}
                 whileHover={{ x: "0%" }}
                 transition={{ type: "tween", ease: "circIn", duration: 0.4 }}
