@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { connectDB } from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
 import { analyzeResume } from '@/lib/openrouter';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 
 // POST: Upload and analyze resume
 export async function POST(req: NextRequest) {
@@ -32,17 +33,26 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Convert File to Buffer for pdf-parse
+        // Convert File to ArrayBuffer for pdfjs
         const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        const uint8Array = new Uint8Array(arrayBuffer);
 
-        // Extract text from PDF using dynamic import
+        // Extract text from PDF using pdfjs-dist
         let textContent = '';
         try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const pdfParse = require('pdf-parse');
-            const pdfData = await pdfParse(buffer);
-            textContent = pdfData.text;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const pdf = await (pdfjsLib as any).getDocument({ data: uint8Array }).promise;
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const pageText = content.items
+                    .filter((item: { str?: string }) => 'str' in item)
+                    .map((item: { str: string }) => item.str)
+                    .join(' ');
+                textContent += pageText + '\n';
+            }
         } catch (pdfError) {
             console.error('PDF parsing error:', pdfError);
             return NextResponse.json(
