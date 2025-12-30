@@ -152,7 +152,24 @@
     @apply border-border outline-ring/50;
   }
 
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-stroke {
+    -webkit-text-stroke: 1px currentColor;
+    color: transparent;
+  }
+
+  .text-stroke-primary {
+    -webkit-text-stroke: 1px var(--primary);
+    color: transparent;
+  }
+
+  .text-stroke-sm {
+    -webkit-text-stroke-width: 0.5px;
   }
 }

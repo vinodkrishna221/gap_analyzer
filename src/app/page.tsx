@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart3, BookOpen, Lightbulb } from "lucide-react";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { ArrowRight, BarChart3, BookOpen, Lightbulb, TrendingUp, Target, Zap } from "lucide-react";
+import {
+  MeshBackground,
+  MagneticButton,
+  TiltCard,
+  BentoGrid
+} from "@/components/ui/PremiumComponents";
 import { AnimatedSection } from "@/components/ui/AnimatedSection";
 import { motion } from "framer-motion";
 import {
@@ -15,6 +20,10 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis
 } from "recharts";
 
 // Mock Data for Micro-Charts
@@ -35,231 +44,261 @@ const skillData = [
   { subject: "Cloud", A: 65, fullMark: 150 },
 ];
 
+const growthData = [
+  { name: 'Week 1', value: 20 },
+  { name: 'Week 2', value: 40 },
+  { name: 'Week 3', value: 35 },
+  { name: 'Week 4', value: 65 },
+  { name: 'Week 5', value: 85 },
+  { name: 'Week 6', value: 100 },
+];
+
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground">
-      {/* Dynamic Background Mesh */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[100px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/10 blur-[100px]" />
-      </div>
+    <div className="flex min-h-screen flex-col bg-background text-foreground overflow-x-hidden selection:bg-primary selection:text-primary-foreground font-sans">
+      <MeshBackground />
 
-      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/0 backdrop-blur-xl transition-all duration-300">
         <div className="container flex h-16 items-center justify-between">
-          <div className="mr-4 hidden md:flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center space-x-2 group">
               <motion.div
-                whileHover={{ rotate: 10 }}
-                className="bg-gradient-to-br from-primary to-purple-600 p-1.5 rounded-lg"
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.5 }}
+                className="bg-gradient-to-br from-primary to-purple-600 p-1.5 rounded-xl shadow-lg shadow-primary/20"
               >
                 <BarChart3 className="h-5 w-5 text-white" />
               </motion.div>
-              <span className="hidden font-bold sm:inline-block tracking-tight text-lg">
+              <span className="hidden font-bold sm:inline-block tracking-tight text-lg group-hover:text-primary transition-colors">
                 GapAnalyzer
               </span>
             </Link>
-            <nav className="flex items-center space-x-6 text-sm font-medium">
-              <Link
-                href="#features"
-                className="transition-colors hover:text-primary text-muted-foreground"
-              >
-                Features
-              </Link>
-              <Link
-                href="#"
-                className="transition-colors hover:text-primary text-muted-foreground"
-              >
-                Pricing
-              </Link>
-              <Link
-                href="#"
-                className="transition-colors hover:text-primary text-muted-foreground"
-              >
-                About
-              </Link>
+            <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+              <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
+              <Link href="#" className="hover:text-primary transition-colors">Pricing</Link>
+              <Link href="#" className="hover:text-primary transition-colors">About</Link>
             </nav>
           </div>
-          <div className="flex flex-1 items-center justify-end space-x-4">
-            <nav className="flex items-center space-x-4">
-              <Link href="/login">
-                <Button variant="ghost" className="hover:bg-primary/10 hover:text-primary">
-                  Login
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
-                  Get Started
-                </Button>
-              </Link>
-            </nav>
+          <div className="flex items-center gap-4">
+            <Link href="/login">
+              <Button variant="ghost" className="hover:bg-white/5">Login</Button>
+            </Link>
+            <Link href="/register">
+              <MagneticButton className="shadow-lg shadow-primary/20">
+                Get Started
+              </MagneticButton>
+            </Link>
           </div>
         </div>
       </header>
 
       <main className="flex-1 relative z-10">
-        <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-20 lg:py-32">
-          <div className="container flex max-w-[64rem] flex-col items-center gap-6 text-center">
+        {/* Hero Section */}
+        <section className="relative pt-20 pb-32 md:pt-32 lg:pb-40 overflow-visible">
+          <div className="container flex flex-col items-center text-center gap-8">
             <AnimatedSection direction="up" delay={0.1}>
-              <h1 className="font-heading text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60">
+              <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-primary backdrop-blur-xl mb-6">
+                <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse"></span>
+                v2.0 Now Live
+              </div>
+              <h1 className="font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tighter leading-[0.9]">
                 Master Your <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-400 to-purple-600">
-                  Future Career
+                <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-400 to-purple-600">
+                  Future
+                </span>{" "}
+                <span className="text-stroke-primary text-transparent relative z-10">
+                  Career
                 </span>
               </h1>
             </AnimatedSection>
 
             <AnimatedSection direction="up" delay={0.2}>
-              <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-                Identify skill gaps, get AI-powered recommendations, and
-                accelerate your growth with data-driven insights.
+              <p className="max-w-[42rem] mx-auto leading-relaxed text-muted-foreground sm:text-xl sm:leading-8">
+                Identify skill gaps, get AI-powered recommendations, and accelerate your growth with data-driven insights.
               </p>
             </AnimatedSection>
 
             <AnimatedSection direction="up" delay={0.3}>
-              <div className="space-x-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-4">
                 <Link href="/register">
-                  <Button size="lg" className="h-12 px-8 rounded-full text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 transition-all hover:scale-105">
+                  <MagneticButton className="h-14 px-10 text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40">
                     Start Analysis <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
+                  </MagneticButton>
                 </Link>
                 <Link href="#features">
-                  <Button variant="outline" size="lg" className="h-12 px-8 rounded-full border-primary/20 hover:bg-primary/5 text-lg transition-all hover:scale-105">
+                  <Button variant="outline" size="lg" className="h-14 px-10 rounded-full border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 text-lg transition-all hover:scale-105">
                     Explore Demo
                   </Button>
                 </Link>
               </div>
             </AnimatedSection>
+
+            {/* Scroll Indicator */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1, duration: 1 }}
+              className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+            >
+              <span className="text-xs text-muted-foreground uppercase tracking-widest">Scroll</span>
+              <motion.div
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="w-px h-12 bg-gradient-to-b from-transparent via-primary to-transparent"
+              />
+            </motion.div>
           </div>
         </section>
 
-        <section
-          id="features"
-          className="container space-y-12 py-8 md:py-12 lg:py-24"
-        >
-          <AnimatedSection>
-            <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-              <h2 className="font-heading text-3xl leading-[1.1] sm:text-3xl md:text-5xl font-bold tracking-tight">
-                Data-Driven <span className="text-primary">Growth</span>
-              </h2>
-              <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
-                Everything you need to visualize and bridge your skill gaps.
-              </p>
-            </div>
-          </AnimatedSection>
-
-          <div className="mx-auto grid justify-center gap-6 sm:grid-cols-2 md:max-w-[70rem] md:grid-cols-3">
-            {/* Feature 1: Skill Gap */}
-            <AnimatedSection delay={0.2} direction="up" className="md:col-span-1">
-              <GlassCard variant="hover" className="h-full relative overflow-hidden group">
-                <div className="p-6 flex flex-col h-full">
-                  <div className="mb-4 p-3 bg-primary/10 w-fit rounded-xl">
-                    <BarChart3 className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="font-bold text-xl mb-2">Skill Gap Analysis</h3>
-                  <p className="text-sm text-muted-foreground flex-1 mb-4">
-                    Visualize the difference between your current skills and job requirements.
-                  </p>
-                  {/* Micro-Chart: Radar */}
-                  <div className="h-[120px] w-full mt-auto opacity-60 group-hover:opacity-100 transition-opacity">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
-                        <PolarGrid stroke="currentColor" strokeOpacity={0.1} />
-                        <PolarAngleAxis dataKey="subject" tick={false} />
-                        <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
-                        <Radar
-                          name="Skills"
-                          dataKey="A"
-                          stroke="var(--primary)"
-                          fill="var(--primary)"
-                          fillOpacity={0.3}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </GlassCard>
-            </AnimatedSection>
-
-            {/* Feature 2: Career Insights */}
-            <AnimatedSection delay={0.3} direction="up" className="md:col-span-1">
-              <GlassCard variant="hover" className="h-full group">
-                <div className="p-6 flex flex-col h-full">
-                  <div className="mb-4 p-3 bg-purple-500/10 w-fit rounded-xl">
-                    <Lightbulb className="h-8 w-8 text-purple-500" />
-                  </div>
-                  <h3 className="font-bold text-xl mb-2">Career Trend AI</h3>
-                  <p className="text-sm text-muted-foreground flex-1 mb-4">
-                    Predictive analysis for your career trajectory based on market data.
-                  </p>
-                  {/* Micro-Chart: Line */}
-                  <div className="h-[120px] w-full mt-auto opacity-60 group-hover:opacity-100 transition-opacity">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={careerData}>
-                        <Line
-                          type="monotone"
-                          dataKey="value"
-                          stroke="#a855f7"
-                          strokeWidth={3}
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </GlassCard>
-            </AnimatedSection>
-
-            {/* Feature 3: Learning Paths */}
-            <AnimatedSection delay={0.4} direction="up" className="md:col-span-1">
-              <GlassCard variant="hover" className="h-full relative">
-                <div className="p-6 flex flex-col h-full">
-                  <div className="mb-4 p-3 bg-green-500/10 w-fit rounded-xl">
-                    <BookOpen className="h-8 w-8 text-green-500" />
-                  </div>
-                  <h3 className="font-bold text-xl mb-2">Curated Paths</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Tailored course lists to fill gaps efficiently.
-                  </p>
-                  {/* Decorative Elements */}
-                  <div className="space-y-2 mt-auto">
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-green-500"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "70%" }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                      />
-                    </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-green-500"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "45%" }}
-                        transition={{ duration: 1, delay: 0.7 }}
-                      />
-                    </div>
-                    <div className="h-2 w-[80%] bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full bg-green-500"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "90%" }}
-                        transition={{ duration: 1, delay: 0.9 }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </GlassCard>
-            </AnimatedSection>
+        {/* Features Bento Grid */}
+        <section id="features" className="container pb-24">
+          <div className="flex flex-col items-center text-center space-y-4 mb-16">
+            <h2 className="font-heading text-4xl md:text-5xl font-bold">
+              Data-Driven <span className="text-primary">Growth</span>
+            </h2>
+            <p className="text-muted-foreground text-lg max-w-2xl">
+              Everything you need to visualize and bridge your skill gaps in one powerful dashboard.
+            </p>
           </div>
+
+          <BentoGrid>
+            {/* 1. Skill Gap Analysis (Large Item) */}
+            <TiltCard className="h-full min-h-[300px] p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 bg-primary/10 rounded-xl">
+                    <BarChart3 className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-2xl">Skill Gap Analysis</h3>
+                </div>
+                <p className="text-muted-foreground text-lg">
+                  Visualize the difference between your current skills and job requirements with distinct clarity.
+                </p>
+              </div>
+
+              <div className="h-[200px] w-full mt-6 relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent z-10" />
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={skillData}>
+                    <PolarGrid stroke="#ffffff20" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#ffffff60', fontSize: 10 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 150]} tick={false} axisLine={false} />
+                    <Radar
+                      name="Skills"
+                      dataKey="A"
+                      stroke="var(--primary)"
+                      strokeWidth={3}
+                      fill="var(--primary)"
+                      fillOpacity={0.4}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </TiltCard>
+
+            {/* 2. Career Trend AI (Tall Item) */}
+            <TiltCard className="h-full min-h-[300px] p-8 flex flex-col">
+              <div className="mb-4">
+                <div className="p-2.5 bg-purple-500/10 w-fit rounded-xl mb-4">
+                  <TrendingUp className="h-6 w-6 text-purple-500" />
+                </div>
+                <h3 className="font-bold text-2xl mb-2">Market Trends</h3>
+                <p className="text-muted-foreground text-sm">
+                  Real-time analysis of job market demands.
+                </p>
+              </div>
+              <div className="flex-1 w-full min-h-[150px] mt-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={careerData}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="value" stroke="#a855f7" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </TiltCard>
+
+            {/* 3. Learning Paths (Wide Item) */}
+            <div className="md:col-span-3">
+              <TiltCard className="h-full p-8 flex flex-col md:flex-row gap-8 items-center bg-gradient-to-r from-background to-primary/5">
+                <div className="flex-1 space-y-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-green-500/10 rounded-xl">
+                        <BookOpen className="h-6 w-6 text-green-500" />
+                      </div>
+                      <h3 className="font-bold text-2xl">Personalized Learning Paths</h3>
+                    </div>
+                    <p className="text-muted-foreground text-lg max-w-xl">
+                      Don't just see the gaps—fill them. get tailored course lists and resources generated instantly by AI.
+                    </p>
+                  </div>
+                  <Link href="/register">
+                    <Button variant="link" className="text-primary p-0 h-auto font-semibold hover:text-primary/80">
+                      View Sample Path <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="flex-1 w-full max-w-md space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ x: 50, opacity: 0 }}
+                      whileInView={{ x: 0, opacity: 1 }}
+                      transition={{ delay: i * 0.2 }}
+                      className="flex items-center gap-4 p-4 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center font-bold text-muted-foreground text-sm">
+                        0{i}
+                      </div>
+                      <div className="flex-1">
+                        <div className="h-2 w-24 bg-white/10 rounded-full mb-2" />
+                        <div className="h-2 w-32 bg-white/5 rounded-full" />
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-white/20" />
+                    </motion.div>
+                  ))}
+                </div>
+              </TiltCard>
+            </div>
+
+            {/* 4. Stats / Extra (Small) */}
+            <TiltCard className="p-6 flex flex-col justify-center items-center text-center space-y-2">
+              <Target className="h-8 w-8 text-blue-500 mb-2" />
+              <h4 className="text-3xl font-bold">98%</h4>
+              <p className="text-sm text-muted-foreground">Accuracy Rate</p>
+            </TiltCard>
+
+            {/* 5. Another Stat */}
+            <TiltCard className="p-6 md:col-span-2 flex flex-row items-center justify-between gap-6 bg-primary text-primary-foreground relative overflow-hidden">
+              <div className="relative z-10 text-left">
+                <h3 className="text-2xl font-bold mb-1">Fast-Track Your Promotion</h3>
+                <p className="text-white/80">Join 10,000+ developers analyzing their careers.</p>
+              </div>
+              <div className="p-4 bg-white/20 rounded-full backdrop-blur-md relative z-10">
+                <Zap className="h-8 w-8 text-yellow-300 fill-yellow-300" />
+              </div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            </TiltCard>
+
+          </BentoGrid>
         </section>
       </main>
-      <footer className="py-10 border-t border-white/5 bg-background/50">
+
+      <footer className="py-10 border-t border-white/5 bg-background/30 backdrop-blur-xl">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            Built by Team GapAnalyzer.
+            Built by <span className="font-bold text-foreground">GapAnalyzer UI Team</span>.
           </p>
-          <div className="flex gap-4">
-            {/* Social placeholders or links */}
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link href="#" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
           </div>
         </div>
       </footer>
