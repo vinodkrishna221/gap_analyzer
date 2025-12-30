@@ -61,16 +61,12 @@ export default function Home() {
       <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-background/0 backdrop-blur-xl transition-all duration-300">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <motion.div
-                whileHover={{ rotate: 180 }}
-                transition={{ duration: 0.5 }}
-                className="bg-gradient-to-br from-primary to-purple-600 p-1.5 rounded-xl shadow-lg shadow-primary/20"
-              >
-                <BarChart3 className="h-5 w-5 text-white" />
-              </motion.div>
-              <span className="hidden font-bold sm:inline-block tracking-tight text-lg group-hover:text-primary transition-colors">
-                GapAnalyzer
+            <Link href="/" className="flex items-center space-x-3 group">
+              <div className="relative h-10 w-10 overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 to-purple-600/20 p-1.5 shadow-lg shadow-primary/10 transition-transform duration-500 group-hover:rotate-12">
+                <img src="/logo.svg" alt="SkillGap Logo" className="h-full w-full object-contain" />
+              </div>
+              <span className="hidden font-bold sm:inline-block tracking-tight text-xl group-hover:text-primary transition-colors">
+                SkillGap
               </span>
             </Link>
             <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
@@ -293,7 +289,7 @@ export default function Home() {
       <footer className="py-10 border-t border-white/5 bg-background/30 backdrop-blur-xl">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            Built by <span className="font-bold text-foreground">GapAnalyzer UI Team</span>.
+            Built by <span className="font-bold text-foreground">SkillGap Team</span>.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
