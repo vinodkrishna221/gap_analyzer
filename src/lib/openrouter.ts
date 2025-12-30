@@ -105,3 +105,75 @@ Respond in VALID JSON format only (no markdown, no extra text):
     }
 }
 
+export interface GeneratedCareer {
+    id: string;
+    title: string;
+    description: string;
+    requiredSkills: {
+        skillName: string;
+        importance: 'Essential' | 'Important' | 'Nice to have';
+        minimumProficiency: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+    }[];
+    salaryRange: string;
+    growthOutlook: string;
+}
+
+export async function generateCareers(industry: string): Promise<GeneratedCareer[]> {
+    const prompt = `
+You are a career expert. Generate 6 realistic job roles/occupations in the "${industry}" industry or field.
+
+For each career, provide:
+- title: Job title
+- description: Brief 1-2 sentence description
+- requiredSkills: Array of 5-7 key skills with importance and proficiency level
+- salaryRange: Typical salary range (e.g., "$60,000 - $90,000")
+- growthOutlook: Job market outlook (e.g., "High demand", "Growing", "Stable")
+
+Respond in VALID JSON format only (no markdown, no extra text):
+{
+    "careers": [
+        {
+            "title": "Job Title",
+            "description": "Brief description",
+            "requiredSkills": [
+                {"skillName": "Skill 1", "importance": "Essential", "minimumProficiency": "Intermediate"},
+                {"skillName": "Skill 2", "importance": "Important", "minimumProficiency": "Beginner"}
+            ],
+            "salaryRange": "$XX,XXX - $XX,XXX",
+            "growthOutlook": "High demand"
+        }
+    ]
+}
+
+Make the careers diverse within the industry, from entry-level to senior positions.
+`;
+
+    try {
+        const response = await openrouter.chat.completions.create({
+            model: AI_MODELS.primary,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 2000
+        });
+
+        const content = response.choices[0].message.content || '{"careers":[]}';
+        const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+
+        return (parsed.careers || []).map((career: any, index: number) => ({
+            id: `ai-${industry.toLowerCase().replace(/\s+/g, '-')}-${index}`,
+            title: career.title || "Unknown Role",
+            description: career.description || "",
+            requiredSkills: (career.requiredSkills || []).map((skill: any) => ({
+                skillName: skill.skillName || skill.name || "Unknown Skill",
+                importance: skill.importance || "Important",
+                minimumProficiency: skill.minimumProficiency || skill.proficiency || "Intermediate"
+            })),
+            salaryRange: career.salaryRange || "Varies",
+            growthOutlook: career.growthOutlook || "Stable"
+        }));
+    } catch (error) {
+        console.error('Career generation error:', error);
+        return [];
+    }
+}

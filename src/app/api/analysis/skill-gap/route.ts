@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { careerIds } = await req.json(); // Array of career IDs to analyze
+        const body = await req.json();
+        const { careerIds, aiCareers } = body; // Support both DB careers and AI-generated careers
 
         await connectDB();
 
@@ -30,43 +31,72 @@ export async function POST(req: NextRequest) {
         }
 
         const userSkills = userSkillsDoc.skills;
-
-        // Analyze each career
         const analyses = [];
 
-        for (const careerId of careerIds.slice(0, 5)) { // Limit to 5 careers
-            const career = await Career.findById(careerId);
-            if (!career) continue;
+        // Handle AI-generated careers
+        if (aiCareers && Array.isArray(aiCareers) && aiCareers.length > 0) {
+            for (const career of aiCareers.slice(0, 5)) {
+                const requiredSkills = career.requiredSkills || [];
 
-            const careerSkillsDoc = await CareerSkill.findOne({ careerId });
-            if (!careerSkillsDoc) continue;
+                // Calculate match using the same algorithm
+                const analysis = calculateSkillMatch(userSkills, requiredSkills);
 
-            const requiredSkills = careerSkillsDoc.requiredSkills;
+                // Get AI insights
+                const aiInsights = await analyzeSkillGap(userSkills, requiredSkills, career.title);
 
-            // Calculate match
-            const analysis = calculateSkillMatch(userSkills, requiredSkills);
+                analyses.push({
+                    careerId: career.id,
+                    careerName: career.title,
+                    matchScore: analysis.matchScore,
+                    matchingSkills: analysis.matchingSkills,
+                    missingSkills: analysis.missingSkills,
+                    partialSkills: analysis.partialSkills,
+                    aiInsights,
+                    salaryRange: career.salaryRange,
+                    growthOutlook: career.growthOutlook
+                });
+            }
+        }
 
-            // Get AI insights
-            const aiInsights = await analyzeSkillGap(userSkills, requiredSkills, career.title);
+        // Handle database careers (original flow)
+        if (careerIds && Array.isArray(careerIds) && careerIds.length > 0) {
+            for (const careerId of careerIds.slice(0, 5)) {
+                const career = await Career.findById(careerId);
+                if (!career) continue;
 
-            // Save analysis
-            const savedAnalysis = await Analysis.create({
-                userId: session.user.id,
-                targetCareerId: careerId,
-                targetCareerName: career.title,
-                results: analysis,
-                aiInsights
-            });
+                const careerSkillsDoc = await CareerSkill.findOne({ careerId });
+                if (!careerSkillsDoc) continue;
 
-            analyses.push({
-                careerId: career._id,
-                careerName: career.title,
-                matchScore: analysis.matchScore,
-                matchingSkills: analysis.matchingSkills,
-                missingSkills: analysis.missingSkills,
-                partialSkills: analysis.partialSkills,
-                aiInsights
-            });
+                const requiredSkills = careerSkillsDoc.requiredSkills;
+                const analysis = calculateSkillMatch(userSkills, requiredSkills);
+                const aiInsights = await analyzeSkillGap(userSkills, requiredSkills, career.title);
+
+                // Save analysis to database
+                await Analysis.create({
+                    userId: session.user.id,
+                    targetCareerId: careerId,
+                    targetCareerName: career.title,
+                    results: analysis,
+                    aiInsights
+                });
+
+                analyses.push({
+                    careerId: career._id,
+                    careerName: career.title,
+                    matchScore: analysis.matchScore,
+                    matchingSkills: analysis.matchingSkills,
+                    missingSkills: analysis.missingSkills,
+                    partialSkills: analysis.partialSkills,
+                    aiInsights
+                });
+            }
+        }
+
+        if (analyses.length === 0) {
+            return NextResponse.json({
+                success: false,
+                error: 'No careers provided for analysis'
+            }, { status: 400 });
         }
 
         return NextResponse.json({
