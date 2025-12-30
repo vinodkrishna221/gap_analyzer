@@ -177,3 +177,75 @@ Make the careers diverse within the industry, from entry-level to senior positio
         return [];
     }
 }
+
+export async function suggestCareersForUser(
+    userSkills: { skillName: string; proficiencyLevel: string }[],
+    interests?: string
+): Promise<GeneratedCareer[]> {
+    const skillsList = userSkills.map(s => `${s.skillName} (${s.proficiencyLevel})`).join(', ');
+
+    const prompt = `
+You are a career advisor. Based on this person's skills and interests, suggest 6 career paths they would be well-suited for.
+
+USER'S CURRENT SKILLS:
+${skillsList || 'No skills specified yet'}
+
+${interests ? `USER'S INTERESTS: ${interests}` : ''}
+
+Generate 6 career roles that:
+1. Leverage their existing skills (they have a head start)
+2. Are in-demand in the current job market
+3. Range from entry-level to advanced positions
+4. Include some roles that might require learning new skills but are achievable
+
+For each career, provide required skills that BUILD ON their existing abilities.
+
+Respond in VALID JSON format only (no markdown, no extra text):
+{
+    "careers": [
+        {
+            "title": "Job Title",
+            "description": "Why this role matches their profile (1-2 sentences)",
+            "matchReason": "Brief explanation of skill alignment",
+            "requiredSkills": [
+                {"skillName": "Skill 1", "importance": "Essential", "minimumProficiency": "Intermediate"},
+                {"skillName": "Skill 2", "importance": "Important", "minimumProficiency": "Beginner"}
+            ],
+            "salaryRange": "$XX,XXX - $XX,XXX",
+            "growthOutlook": "High demand"
+        }
+    ]
+}
+`;
+
+    try {
+        const response = await openrouter.chat.completions.create({
+            model: AI_MODELS.primary,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.7,
+            max_tokens: 2500
+        });
+
+        const content = response.choices[0].message.content || '{"careers":[]}';
+        const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+
+        return (parsed.careers || []).map((career: any, index: number) => ({
+            id: `suggested-${index}`,
+            title: career.title || "Unknown Role",
+            description: career.description || "",
+            matchReason: career.matchReason || "",
+            requiredSkills: (career.requiredSkills || []).map((skill: any) => ({
+                skillName: skill.skillName || skill.name || "Unknown Skill",
+                importance: skill.importance || "Important",
+                minimumProficiency: skill.minimumProficiency || skill.proficiency || "Intermediate"
+            })),
+            salaryRange: career.salaryRange || "Varies",
+            growthOutlook: career.growthOutlook || "Stable"
+        }));
+    } catch (error) {
+        console.error('Career suggestion error:', error);
+        return [];
+    }
+}
+

@@ -9,25 +9,50 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import ReactMarkdown from 'react-markdown';
-import { Search, Loader2, Briefcase, TrendingUp, DollarSign } from 'lucide-react';
+import { Search, Loader2, Briefcase, TrendingUp, DollarSign, Sparkles, AlertCircle } from 'lucide-react';
 
 export default function AnalysisPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [careers, setCareers] = useState<any[]>([]);
+    const [suggestedCareers, setSuggestedCareers] = useState<any[]>([]);
     const [selectedCareers, setSelectedCareers] = useState<string[]>([]);
     const [analyses, setAnalyses] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
     const [stage, setStage] = useState<'select' | 'results'>('select');
     const [searchQuery, setSearchQuery] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
+    const [userSkills, setUserSkills] = useState<string[]>([]);
+    const [needsSkills, setNeedsSkills] = useState(false);
+    const [viewMode, setViewMode] = useState<'suggested' | 'search'>('suggested');
 
     useEffect(() => {
         if (status === 'unauthenticated') {
             router.push('/login');
+        } else if (status === 'authenticated') {
+            loadSuggestions();
         }
     }, [status, router]);
+
+    const loadSuggestions = async () => {
+        setLoadingSuggestions(true);
+        try {
+            const res = await fetch('/api/careers/suggestions');
+            const data = await res.json();
+            if (data.success) {
+                setSuggestedCareers(data.data.careers);
+                setUserSkills(data.data.basedOnSkills || []);
+            } else if (data.needsSkills) {
+                setNeedsSkills(true);
+            }
+        } catch (e) {
+            console.error("Failed to load suggestions", e);
+        } finally {
+            setLoadingSuggestions(false);
+        }
+    };
 
     const searchCareers = async () => {
         if (!searchQuery.trim()) return;
@@ -40,6 +65,7 @@ export default function AnalysisPage() {
             if (data.success) {
                 setCareers(data.data.careers);
                 setHasSearched(true);
+                setViewMode('search');
             } else {
                 alert(data.error || 'Search failed');
             }
@@ -84,121 +110,206 @@ export default function AnalysisPage() {
         }
     };
 
+    // Helper to render career cards
+    const renderCareerCard = (career: any) => (
+        <Card
+            key={career.id}
+            className={`p-4 cursor-pointer transition ${selectedCareers.includes(career.id)
+                ? 'ring-2 ring-blue-600 bg-blue-50'
+                : 'hover:shadow-lg'
+                }`}
+            onClick={() => {
+                if (selectedCareers.includes(career.id)) {
+                    setSelectedCareers(selectedCareers.filter(id => id !== career.id));
+                } else if (selectedCareers.length < 3) {
+                    setSelectedCareers([...selectedCareers, career.id]);
+                }
+            }}
+        >
+            <div className="flex items-start justify-between">
+                <div className="flex-1">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-blue-600" />
+                        {career.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">{career.description}</p>
+                    {career.matchReason && (
+                        <p className="text-xs text-green-600 mt-1 italic">✨ {career.matchReason}</p>
+                    )}
+                </div>
+                {selectedCareers.includes(career.id) && (
+                    <Badge className="bg-blue-600">Selected</Badge>
+                )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                    <DollarSign className="h-3 w-3" />
+                    {career.salaryRange}
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                    <TrendingUp className="h-3 w-3" />
+                    {career.growthOutlook}
+                </span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1">
+                {career.requiredSkills?.slice(0, 4).map((skill: any, i: number) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                        {skill.skillName}
+                    </Badge>
+                ))}
+                {career.requiredSkills?.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                        +{career.requiredSkills.length - 4} more
+                    </Badge>
+                )}
+            </div>
+        </Card>
+    );
+
+    const currentCareers = viewMode === 'suggested' ? suggestedCareers : careers;
+
     if (stage === 'select') {
         return (
             <div className="min-h-screen bg-gray-50 py-8 px-4">
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-4xl font-bold mb-4">Analyze Your Skill Gap</h1>
-                    <p className="text-gray-600 mb-8">
-                        Search for an industry or job type to discover careers and see how your skills match up.
+                    <h1 className="text-4xl font-bold mb-2">Analyze Your Skill Gap</h1>
+                    <p className="text-gray-600 mb-6">
+                        Discover careers that match your skills or search for specific industries.
                     </p>
 
-                    {/* Industry Search */}
-                    <div className="flex gap-2 mb-8">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <Input
-                                placeholder="Enter industry or job type (e.g., Software Development, Healthcare, Marketing)"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && searchCareers()}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Button onClick={searchCareers} disabled={searching || !searchQuery.trim()}>
-                            {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search Careers'}
+                    {/* Tabs: Suggested vs Search */}
+                    <div className="flex gap-2 mb-6">
+                        <Button
+                            variant={viewMode === 'suggested' ? 'default' : 'outline'}
+                            onClick={() => setViewMode('suggested')}
+                            className="flex items-center gap-2"
+                        >
+                            <Sparkles className="h-4 w-4" />
+                            Suggested for You
+                        </Button>
+                        <Button
+                            variant={viewMode === 'search' ? 'default' : 'outline'}
+                            onClick={() => setViewMode('search')}
+                            className="flex items-center gap-2"
+                        >
+                            <Search className="h-4 w-4" />
+                            Search by Industry
                         </Button>
                     </div>
 
-                    {/* Search Results */}
-                    {searching && (
+                    {/* Needs Skills Warning */}
+                    {needsSkills && viewMode === 'suggested' && (
+                        <Card className="p-6 mb-6 border-yellow-200 bg-yellow-50">
+                            <div className="flex items-start gap-4">
+                                <AlertCircle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-1" />
+                                <div>
+                                    <h3 className="font-semibold text-yellow-800">Add your skills first</h3>
+                                    <p className="text-sm text-yellow-700 mt-1">
+                                        To get personalized career suggestions, please add your skills in your profile.
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        className="mt-3"
+                                        onClick={() => router.push('/dashboard')}
+                                    >
+                                        Go to Profile
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Search Mode UI */}
+                    {viewMode === 'search' && (
+                        <div className="flex gap-2 mb-6">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    placeholder="Enter industry or job type (e.g., Software Development, Healthcare)"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && searchCareers()}
+                                    className="pl-10"
+                                />
+                            </div>
+                            <Button onClick={searchCareers} disabled={searching || !searchQuery.trim()}>
+                                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Search'}
+                            </Button>
+                        </div>
+                    )}
+
+                    {/* Loading States */}
+                    {(loadingSuggestions && viewMode === 'suggested') && (
+                        <div className="text-center py-12">
+                            <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
+                            <p className="mt-4 text-gray-600">Loading personalized career suggestions...</p>
+                        </div>
+                    )}
+
+                    {(searching && viewMode === 'search') && (
                         <div className="text-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
                             <p className="mt-4 text-gray-600">Generating careers in {searchQuery}...</p>
                         </div>
                     )}
 
-                    {!searching && hasSearched && careers.length === 0 && (
+                    {/* Suggested Careers Section */}
+                    {viewMode === 'suggested' && !loadingSuggestions && !needsSkills && suggestedCareers.length > 0 && (
+                        <>
+                            <div className="flex items-center gap-2 mb-4">
+                                <Sparkles className="h-5 w-5 text-purple-600" />
+                                <p className="text-sm text-gray-600">
+                                    Based on your skills: <span className="font-medium">{userSkills.slice(0, 3).join(', ')}{userSkills.length > 3 && ` +${userSkills.length - 3} more`}</span>
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                {suggestedCareers.map(renderCareerCard)}
+                            </div>
+                        </>
+                    )}
+
+                    {/* Search Results */}
+                    {viewMode === 'search' && !searching && hasSearched && careers.length === 0 && (
                         <div className="text-center py-12 text-gray-500">
                             No careers found. Try a different search term.
                         </div>
                     )}
 
-                    {!searching && careers.length > 0 && (
+                    {viewMode === 'search' && !searching && careers.length > 0 && (
                         <>
                             <p className="text-sm text-gray-500 mb-4">
-                                Select up to 3 careers to analyze (found {careers.length} careers in "{searchQuery}")
+                                Found {careers.length} careers in "{searchQuery}"
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                                {careers.map((career) => (
-                                    <Card
-                                        key={career.id}
-                                        className={`p-4 cursor-pointer transition ${selectedCareers.includes(career.id)
-                                            ? 'ring-2 ring-blue-600 bg-blue-50'
-                                            : 'hover:shadow-lg'
-                                            }`}
-                                        onClick={() => {
-                                            if (selectedCareers.includes(career.id)) {
-                                                setSelectedCareers(selectedCareers.filter(id => id !== career.id));
-                                            } else if (selectedCareers.length < 3) {
-                                                setSelectedCareers([...selectedCareers, career.id]);
-                                            }
-                                        }}
-                                    >
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-lg flex items-center gap-2">
-                                                    <Briefcase className="h-4 w-4 text-blue-600" />
-                                                    {career.title}
-                                                </h3>
-                                                <p className="text-sm text-gray-600 mt-1">{career.description}</p>
-                                            </div>
-                                            {selectedCareers.includes(career.id) && (
-                                                <Badge className="bg-blue-600">Selected</Badge>
-                                            )}
-                                        </div>
-                                        <div className="mt-3 flex flex-wrap gap-2">
-                                            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                                                <DollarSign className="h-3 w-3" />
-                                                {career.salaryRange}
-                                            </span>
-                                            <span className="inline-flex items-center gap-1 text-xs text-green-600">
-                                                <TrendingUp className="h-3 w-3" />
-                                                {career.growthOutlook}
-                                            </span>
-                                        </div>
-                                        <div className="mt-2 flex flex-wrap gap-1">
-                                            {career.requiredSkills?.slice(0, 4).map((skill: any, i: number) => (
-                                                <Badge key={i} variant="outline" className="text-xs">
-                                                    {skill.skillName}
-                                                </Badge>
-                                            ))}
-                                            {career.requiredSkills?.length > 4 && (
-                                                <Badge variant="outline" className="text-xs">
-                                                    +{career.requiredSkills.length - 4} more
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    </Card>
-                                ))}
+                                {careers.map(renderCareerCard)}
                             </div>
-
-                            <Button
-                                onClick={runAnalysis}
-                                disabled={selectedCareers.length === 0 || loading}
-                                className="w-full"
-                                size="lg"
-                            >
-                                {loading ? 'Analyzing...' : `Analyze ${selectedCareers.length} Career(s)`}
-                            </Button>
                         </>
                     )}
 
-                    {!hasSearched && !searching && (
+                    {/* Empty state for search */}
+                    {viewMode === 'search' && !searching && !hasSearched && (
                         <div className="text-center py-12 text-gray-400">
-                            <Briefcase className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>Enter an industry above to discover careers</p>
                         </div>
+                    )}
+
+                    {/* Analyze Button */}
+                    {currentCareers.length > 0 && selectedCareers.length > 0 && (
+                        <Button
+                            onClick={runAnalysis}
+                            disabled={loading}
+                            className="w-full"
+                            size="lg"
+                        >
+                            {loading ? 'Analyzing...' : `Analyze ${selectedCareers.length} Career(s)`}
+                        </Button>
+                    )}
+
+                    {currentCareers.length > 0 && selectedCareers.length === 0 && (
+                        <p className="text-center text-sm text-gray-500">
+                            Select up to 3 careers to analyze your skill gap
+                        </p>
                     )}
                 </div>
             </div>
