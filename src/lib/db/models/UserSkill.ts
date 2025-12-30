@@ -28,8 +28,7 @@ const UserSkillSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-// Index for faster user lookups
-UserSkillSchema.index({ userId: 1 });
+// Note: userId already has an index via unique: true
 
 export const UserSkill = mongoose.models.UserSkill ||
     mongoose.model('UserSkill', UserSkillSchema);

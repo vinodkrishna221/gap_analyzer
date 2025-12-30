@@ -23,8 +23,7 @@ const CareerSkillSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now }
 });
 
-// Index for faster career lookups
-CareerSkillSchema.index({ careerId: 1 });
+// Note: careerId already has an index via unique: true
 
 export const CareerSkill = mongoose.models.CareerSkill ||
     mongoose.model('CareerSkill', CareerSkillSchema);

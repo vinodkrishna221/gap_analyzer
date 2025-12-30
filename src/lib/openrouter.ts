@@ -351,18 +351,18 @@ export async function suggestCareersForUser(
     const skillsList = userSkills.map(s => `${s.skillName}(${s.proficiencyLevel})`).join(', ');
 
     const prompt = `
-Suggest 6 careers for someone with: ${skillsList || 'No skills yet'}
+Suggest 5 careers for someone with: ${skillsList || 'No skills yet'}
 ${interests ? `Interests: ${interests}` : ''}
 
-JSON only, no markdown:
+JSON only, no markdown, keep responses concise:
 {
     "careers": [{
         "title": "Job Title",
-        "description": "Why this matches (1 sentence)",
-        "matchReason": "Skill alignment",
+        "description": "Brief description",
+        "matchReason": "Why this matches",
         "requiredSkills": [{"skillName": "X", "importance": "Essential", "minimumProficiency": "Intermediate"}],
         "salaryRange": "$XX,XXX - $XX,XXX",
-        "growthOutlook": "High demand"
+        "growthOutlook": "High/Medium/Low demand"
     }]
 }
 `;
@@ -372,12 +372,43 @@ JSON only, no markdown:
             model: AI_MODELS.primary,
             messages: [{ role: "user", content: prompt }],
             temperature: 0.7,
-            max_tokens: 800 // Reduced from 2500
+            max_tokens: 1200 // Increased to prevent truncation
         });
 
         const content = response.choices[0].message.content || '{"careers":[]}';
-        const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const parsed = JSON.parse(cleanJson);
+        let cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+        let parsed: any;
+        try {
+            parsed = JSON.parse(cleanJson);
+        } catch (parseError) {
+            // Attempt to repair truncated JSON
+            console.warn('Attempting to repair truncated JSON response...');
+
+            // Try to find the last complete career object
+            const careersMatch = cleanJson.match(/"careers"\s*:\s*\[/);
+            if (careersMatch) {
+                // Find all complete career objects
+                const objectPattern = /\{[^{}]*"title"[^{}]*"description"[^{}]*\}/g;
+                const matches = cleanJson.match(objectPattern);
+
+                if (matches && matches.length > 0) {
+                    // Rebuild JSON with only complete objects
+                    const repairedJson = `{"careers":[${matches.join(',')}]}`;
+                    try {
+                        parsed = JSON.parse(repairedJson);
+                        console.log(`Recovered ${matches.length} careers from truncated response`);
+                    } catch {
+                        // If repair fails, use empty array
+                        parsed = { careers: [] };
+                    }
+                } else {
+                    parsed = { careers: [] };
+                }
+            } else {
+                parsed = { careers: [] };
+            }
+        }
 
         return (parsed.careers || []).map((career: any, index: number) => ({
             id: `suggested-${index}`,
