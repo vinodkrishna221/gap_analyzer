@@ -86,7 +86,9 @@ export default function AnalysisPage() {
         setLoading(true);
         try {
             // For AI-generated careers, we pass the full career data
-            const selectedCareerData = careers.filter(c => selectedCareers.includes(c.id));
+            // Check both suggested and searched careers
+            const allCareers = [...suggestedCareers, ...careers];
+            const selectedCareerData = allCareers.filter(c => selectedCareers.includes(c.id));
 
             const res = await fetch('/api/analysis/skill-gap', {
                 method: 'POST',
