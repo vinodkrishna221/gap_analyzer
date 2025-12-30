@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ResumeUpload from './ResumeUpload';
 
 export default function ProfileForm() {
     const [loading, setLoading] = useState(true);
@@ -79,97 +80,103 @@ export default function ProfileForm() {
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Update your personal details and educational background.</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-                <CardContent className="space-y-4">
-                    {message && (
-                        <div className={`p-3 rounded text-sm ${message.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                            {message.text}
-                        </div>
-                    )}
-
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="level">Education Level</Label>
-                            <Select
-                                value={formData.education.level}
-                                onValueChange={(val) => setFormData({
-                                    ...formData,
-                                    education: { ...formData.education, level: val }
-                                })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="High School">High School</SelectItem>
-                                    <SelectItem value="Bachelor's">Bachelor's</SelectItem>
-                                    <SelectItem value="Master's">Master's</SelectItem>
-                                    <SelectItem value="PhD">PhD</SelectItem>
-                                    <SelectItem value="Other">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Basic Information</CardTitle>
+                    <CardDescription>Update your personal details and educational background.</CardDescription>
+                </CardHeader>
+                <form onSubmit={handleSubmit}>
+                    <CardContent className="space-y-4">
+                        {message && (
+                            <div className={`p-3 rounded text-sm ${message.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                                {message.text}
+                            </div>
+                        )}
 
                         <div className="space-y-2">
-                            <Label htmlFor="year">Graduation Year</Label>
+                            <Label htmlFor="name">Full Name</Label>
                             <Input
-                                id="year"
-                                type="number"
-                                value={formData.education.graduationYear}
+                                id="name"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="level">Education Level</Label>
+                                <Select
+                                    value={formData.education.level}
+                                    onValueChange={(val) => setFormData({
+                                        ...formData,
+                                        education: { ...formData.education, level: val }
+                                    })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select level" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="High School">High School</SelectItem>
+                                        <SelectItem value="Bachelor's">Bachelor's</SelectItem>
+                                        <SelectItem value="Master's">Master's</SelectItem>
+                                        <SelectItem value="PhD">PhD</SelectItem>
+                                        <SelectItem value="Other">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="year">Graduation Year</Label>
+                                <Input
+                                    id="year"
+                                    type="number"
+                                    value={formData.education.graduationYear}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        education: { ...formData.education, graduationYear: parseInt(e.target.value) }
+                                    })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="institution">Institution / University</Label>
+                            <Input
+                                id="institution"
+                                value={formData.education.institution}
                                 onChange={(e) => setFormData({
                                     ...formData,
-                                    education: { ...formData.education, graduationYear: parseInt(e.target.value) }
+                                    education: { ...formData.education, institution: e.target.value }
                                 })}
                             />
                         </div>
-                    </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="institution">Institution / University</Label>
-                        <Input
-                            id="institution"
-                            value={formData.education.institution}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                education: { ...formData.education, institution: e.target.value }
-                            })}
-                        />
-                    </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="field">Field of Study</Label>
+                            <Input
+                                id="field"
+                                value={formData.education.fieldOfStudy}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    education: { ...formData.education, fieldOfStudy: e.target.value }
+                                })}
+                            />
+                        </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="field">Field of Study</Label>
-                        <Input
-                            id="field"
-                            value={formData.education.fieldOfStudy}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                education: { ...formData.education, fieldOfStudy: e.target.value }
-                            })}
-                        />
-                    </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button type="submit" disabled={saving}>
+                            {saving ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Card>
 
-                </CardContent>
-                <CardFooter>
-                    <Button type="submit" disabled={saving}>
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                </CardFooter>
-            </form>
-        </Card>
+            {/* Resume Upload Section */}
+            <ResumeUpload />
+        </div>
     );
 }
+

@@ -19,6 +19,17 @@ const UserSchema = new mongoose.Schema({
             institution: String,
             fieldOfStudy: String,
             graduationYear: Number
+        },
+        resume: {
+            fileName: String,
+            uploadedAt: Date,
+            textContent: String,
+            aiAnalysis: {
+                skills: [String],
+                experience: String,
+                summary: String,
+                recommendations: [String]
+            }
         }
     },
     createdAt: { type: Date, default: Date.now },

@@ -51,3 +51,57 @@ Be encouraging but realistic.
         return "Unable to generate AI insights at this time.";
     }
 }
+
+export interface ResumeAnalysis {
+    skills: string[];
+    experience: string;
+    summary: string;
+    recommendations: string[];
+}
+
+export async function analyzeResume(resumeText: string): Promise<ResumeAnalysis> {
+    const prompt = `
+You are an expert career advisor analyzing a resume. Extract and analyze the following from this resume text:
+
+RESUME TEXT:
+${resumeText.slice(0, 6000)} 
+
+Respond in VALID JSON format only (no markdown, no extra text):
+{
+    "skills": ["skill1", "skill2", ...],  // List of technical and soft skills mentioned
+    "experience": "Brief summary of work experience (2-3 sentences)",
+    "summary": "Professional profile summary (2-3 sentences)",
+    "recommendations": ["recommendation1", "recommendation2", ...]  // 3-5 career improvement suggestions
+}
+`;
+
+    try {
+        const response = await openrouter.chat.completions.create({
+            model: AI_MODELS.primary,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.3,
+            max_tokens: 1000
+        });
+
+        const content = response.choices[0].message.content || '{}';
+        // Clean any markdown code blocks if present
+        const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanJson);
+
+        return {
+            skills: parsed.skills || [],
+            experience: parsed.experience || "Unable to extract experience",
+            summary: parsed.summary || "Unable to generate summary",
+            recommendations: parsed.recommendations || []
+        };
+    } catch (error) {
+        console.error('Resume analysis error:', error);
+        return {
+            skills: [],
+            experience: "Analysis failed",
+            summary: "Unable to analyze resume at this time",
+            recommendations: ["Please try uploading again"]
+        };
+    }
+}
+
